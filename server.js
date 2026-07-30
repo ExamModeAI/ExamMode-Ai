@@ -5,15 +5,16 @@ const app = express();
 const waitlistDB = [];
 let currentId = 1;
 
-// Middleware
+// ✅ Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname))); // Static files (HTML, CSS, JS)
+app.use(express.static(path.join(__dirname)));
 
-// Routes
+// ✅ Root Route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index-3.html')); // तेरी फाइल का नाम index-3.html है, ध्यान रहे!
+  res.sendFile(path.join(__dirname, 'index-3.html'));
 });
 
+// ✅ Waitlist API
 app.post('/api/waitlist', (req, res) => {
   const { name, email, exam } = req.body;
   if (!name || !email || !exam) {
@@ -28,7 +29,7 @@ app.post('/api/waitlist', (req, res) => {
     timestamp: new Date().toISOString()
   };
   waitlistDB.push(newEntry);
-  console.log('✅ New Signup:', newEntry); // ये Vercel Logs में दिखेगा
+  console.log('✅ New Signup:', JSON.stringify(newEntry));
 
   res.status(201).json({
     success: true,
@@ -37,10 +38,5 @@ app.post('/api/waitlist', (req, res) => {
   });
 });
 
-// 🔥 YEH LINE SABSE IMPORTANT HAI — Vercel के लिए Export
+// 🔥 VERCEL EXPORT (सिर्फ यही काफी है—app.listen() हटा दो)
 module.exports = app;
-
-// ---- Start server ----
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
