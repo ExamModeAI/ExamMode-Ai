@@ -1,69 +1,44 @@
-// server.js
-// Production-ready Express server for the JEE/NEET Waitlist MVP
-// Serves index.html as a static file and handles waitlist submissions in-memory.
-
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const waitlistDB = [];
+let currentId = 1;
 
-// ---- Middleware ----
-app.use(cors());
+// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname))); // serves index.html + any other static assets
+app.use(express.static(path.join(__dirname))); // Static files (HTML, CSS, JS)
 
-// ---- In-memory "database" ----
-// NOTE: This resets every time the server restarts.
-// Swap for a real DB (MongoDB/Postgres/MySQL) before scaling past MVP.
-global.waitlistDB = [];
-
-// ---- Validation helper ----
-function isValidEmail(email) {
-  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ---- Root route: serve index.html ----
+// Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'index-3.html')); // तेरी फाइल का नाम index-3.html है, ध्यान रहे!
 });
 
-// ---- POST /api/waitlist ----
 app.post('/api/waitlist', (req, res) => {
-  const { name, email, exam } = req.body || {};
-
-  if (!name || typeof name !== 'string' || name.trim().length < 2) {
-    return res.status(400).json({ success: false, message: 'Valid name is required.' });
-  }
-  if (!isValidEmail(email)) {
-    return res.status(400).json({ success: false, message: 'Valid email is required.' });
-  }
-  if (!exam || !['JEE', 'NEET'].includes(exam)) {
-    return res.status(400).json({ success: false, message: 'Exam must be JEE or NEET.' });
+  const { name, email, exam } = req.body;
+  if (!name || !email || !exam) {
+    return res.status(400).json({ success: false, message: 'Missing fields' });
   }
 
-  const entry = {
-    id: waitlistDB.length + 1,
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
+  const newEntry = {
+    id: currentId++,
+    name,
+    email,
     exam,
-    timestamp: new Date().toISOString(),
+    timestamp: new Date().toISOString()
   };
+  waitlistDB.push(newEntry);
+  console.log('✅ New Signup:', newEntry); // ये Vercel Logs में दिखेगा
 
-  waitlistDB.push(entry);
-
-  console.log(
-    `[${entry.timestamp}] ✅ New waitlist signup — ID:${entry.id} | ${entry.name} | ${entry.email} | ${entry.exam} | Total: ${waitlistDB.length}`
-  );
-
-  return res.status(201).json({
+  res.status(201).json({
     success: true,
-    message: 'Added',
-    position: waitlistDB.length,
+    message: 'Added to waitlist',
+    position: waitlistDB.length
   });
 });
+
+// 🔥 YEH LINE SABSE IMPORTANT HAI — Vercel के लिए Export
+module.exports = app;
 
 // ---- Start server ----
 app.listen(PORT, () => {
